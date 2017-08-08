@@ -5,21 +5,24 @@ import collections
 import json
 import logging
 import socket
-import time
 import timeit
 
 from riemann_client.client import Client
-from riemann_client.transport import TCPTransport
 from riemann_client.riemann_pb2 import Msg
+from riemann_client.transport import TCPTransport
+
 
 MetricId = namedtuple('MetricId', ['name', 'tags', 'attributes'])
+
 
 class Recorder:
     """
     Base type for recorders - objects that forward metrics over a transport
     """
-    def id(self, servicename, tags, fields):
-        return MetricId(servicename, frozenset(tags), frozenset(fields.items()))
+    def id(self, service_name, tags, fields):
+        return MetricId(
+            service_name, frozenset(tags), frozenset(fields.items())
+        )
 
     def send(self, id, value, transport, suffix=""):
         transport.send_event({
@@ -27,19 +30,25 @@ class Recorder:
             "attributes": {k: str(v) for (k, v) in id.attributes},
             "service": id.name + suffix,
             "metric_f": value
-            })
+        })
 
 
 class LogTransport:
 
     """
-    Simple Transport that sprints metrics to the log. Useful for development environments
+    Simple Transport that sprints metrics to the log. Useful for development
+    environments
     """
     def __init__(self):
         self._logger = logging.getLogger("metrics")
 
     def send_event(self, event):
-        self._logger.info("metric %s=%s (%s)" % (event['service'], event['metric_f'], json.dumps(event.get('attributes'))))
+        self._logger.info(
+            "metric %s=%s (%s)",
+            event['service'],
+            event['metric_f'],
+            json.dumps(event.get('attributes'))
+        )
 
     def flush(self, is_closing):
         pass
@@ -48,8 +57,8 @@ class LogTransport:
 class InMemoryTransport:
 
     """
-    Dummy transport that keeps a copy of the last flushed batch of events. This is used to
-    store the data for the stats endpoints.
+    Dummy transport that keeps a copy of the last flushed batch of events. This
+    is used to store the data for the stats endpoints.
     """
     def __init__(self):
         self.current_batch = []
@@ -110,7 +119,8 @@ class RiemannTransport:
 class CompositeTransport:
 
     """
-    Transport that wraps two or more transports and forwards events to all of them.
+    Transport that wraps two or more transports and forwards events to all of
+    them.
     """
 
     def __init__(self, *args):
@@ -127,8 +137,8 @@ class CompositeTransport:
 
 class Gauge(Recorder):
     """
-    Gauges record a scalar value at a point in time. For example: response time, number of active
-    sessions, disk space free
+    Gauges record a scalar value at a point in time. For example: response
+    time, number of active sessions, disk space free
     """
 
     def __init__(self, source):
@@ -138,10 +148,10 @@ class Gauge(Recorder):
     def reset(self):
         self.gauges = defaultdict(list)
 
-    def record(self, servicename, value, tags=[], attributes=dict()):
+    def record(self, service_name, value, tags=[], attributes=dict()):
         if self.source:
             attributes['source'] = self.source
-        id = self.id(servicename, tags, attributes)
+        id = self.id(service_name, tags, attributes)
         self.gauges[id].append(value)
 
     def flush(self, transport):
@@ -172,16 +182,17 @@ class Gauge(Recorder):
 class Counter(Recorder):
 
     """
-    Counters record incrementing or decrementing values, eg. Events Processed, error count, cache hits.
+    Counters record incrementing or decrementing values, eg. Events Processed,
+    error count, cache hits.
     """
     def __init__(self, source):
         self.source = source
         self.counters = collections.Counter()
 
-    def record(self, servicename, value, tags, attributes):
+    def record(self, service_name, value, tags, attributes):
         if self.source:
             attributes['source'] = self.source
-        self.counters[self.id(servicename, tags, attributes)] += value
+        self.counters[self.id(service_name, tags, attributes)] += value
 
     def flush(self, transport):
         for counter in self.counters:
@@ -192,11 +203,11 @@ class Counter(Recorder):
 class Timer:
 
     """
-    Timers provide a context manager that times an operation and records a gauge with
-    the elapsed time.
+    Timers provide a context manager that times an operation and records a
+    gauge with the elapsed time.
     """
-    def __init__(self, servicename, tags, attributes, gauge):
-        self.servicename = servicename
+    def __init__(self, service_name, tags, attributes, gauge):
+        self.service_name = service_name
         self.tags = tags
         self.attributes = attributes
         self.recorder = gauge
@@ -206,7 +217,9 @@ class Timer:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         elapsed = timeit.default_timer() - self.start
-        self.recorder.record(self.servicename, elapsed, self.tags, self.attributes)
+        self.recorder.record(
+            self.service_name, elapsed, self.tags, self.attributes
+        )
 
 
 class Metrics:
@@ -216,20 +229,19 @@ class Metrics:
         self.gauges = Gauge(source)
         self.counters = Counter(source)
 
-    def recordGauge(self, servicename, value, tags=[], **kwargs):
-        self.gauges.record(servicename, value, tags, kwargs)
+    def recordGauge(self, service_name, value, tags=[], **kwargs):
+        self.gauges.record(service_name, value, tags, kwargs)
 
-    def incrementCounter(self, servicename, value=1, tags=[], **kwargs):
-        self.counters.record(servicename, value, tags, kwargs)
+    def incrementCounter(self, service_name, value=1, tags=[], **kwargs):
+        self.counters.record(service_name, value, tags, kwargs)
 
-    def decrementCounter(self, servicename, value=1, tags=[], **kwargs):
-        self.counters.record(servicename, 0 - value, tags, kwargs)
+    def decrementCounter(self, service_name, value=1, tags=[], **kwargs):
+        self.counters.record(service_name, 0 - value, tags, kwargs)
 
-    def time(self, servicename, tags=[], **kwargs):
-        return Timer(servicename, tags, kwargs, self.gauges)
+    def time(self, service_name, tags=[], **kwargs):
+        return Timer(service_name, tags, kwargs, self.gauges)
 
     def flush(self, is_closing=False):
         self.gauges.flush(self.transport)
         self.counters.flush(self.transport)
         self.transport.flush(is_closing)
-
