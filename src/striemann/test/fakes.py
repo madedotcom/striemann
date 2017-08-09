@@ -3,6 +3,12 @@
 For use in tests.
 """
 
+__all__ = [
+    'metric_id',
+    'FakeTimer',
+    'FakeMetrics',
+]
+
 from striemann.metrics import MetricId
 
 

@@ -3,6 +3,11 @@
 https://pypi.python.org/pypi/expects
 """
 
+__all__ = [
+    'contain_metric',
+]
+
+
 from expects.matchers import Matcher
 from .fakes import metric_id
 
