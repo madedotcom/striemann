@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
 import ast
+import os
 
-from setuptools import setup, find_packages
+from distutils.core import setup
+
+
+def this_dir():
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def read_version(path):
@@ -36,9 +41,15 @@ install_requires = [
     "riemann-client==6.5.0",
 ]
 
+
 tests_require = [
     "Contexts==0.10.2",
+
 ]
+
+
+version = read_version(os.path.join(this_dir(), 'src/striemann/metrics.py'))
+
 
 setup(
     name='striemann',
@@ -50,9 +61,11 @@ setup(
     install_requires=install_requires,
     license='MIT',
     package_dir={'': 'src'},
-    packages=find_packages(),
+    # setuptools.find_packages does not work with PEP 420 packages so just list
+    # the only package https://github.com/pypa/setuptools/issues/97
+    packages=['striemann'],
     platforms=['any'],
     tests_require=tests_require,
-    version=read_version('src/striemann/metrics.py'),
+    version=version,
     zip_safe=True,
 )
