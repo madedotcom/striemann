@@ -37,5 +37,8 @@ class FakeMetrics:
     def recordGauge(self, service_name, value, tags=[], **kwargs):
         self.metrics.append((metric_id(service_name, tags, kwargs), value))
 
+    def incrementCounter(self, servicename, value=1, tags=[], **kwargs):
+        self.metrics.append((metric_id(servicename, tags, kwargs), value))
+
     def time(self, service_name, tags=[], **kwargs):
         return FakeTimer(service_name, tags, kwargs, self.metrics)
