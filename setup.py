@@ -3,7 +3,7 @@
 import ast
 import os
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 
 def this_dir():
@@ -61,9 +61,7 @@ setup(
     install_requires=install_requires,
     license='MIT',
     package_dir={'': 'src'},
-    # setuptools.find_packages does not work with PEP 420 packages so just list
-    # the only package https://github.com/pypa/setuptools/issues/97
-    packages=['striemann'],
+    packages=find_packages('src'),
     platforms=['any'],
     tests_require=tests_require,
     version=version,
