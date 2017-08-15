@@ -48,7 +48,7 @@ tests_require = [
 ]
 
 
-version = read_version(os.path.join(this_dir(), 'src/striemann/metrics.py'))
+version = read_version(os.path.join(this_dir(), 'src/striemann/_version.py'))
 
 
 setup(
