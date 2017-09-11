@@ -26,23 +26,38 @@ from riemann_client.transport import TCPTransport
 
 MetricId = namedtuple('MetricId', ['name', 'tags', 'attributes'])
 
+class Metric:
+
+    def __init__(self, service, value, ttl, tags, fields):
+        self.id = self._id(service, tags, fields)
+        self.value = value
+        self.name = service
+        self.tags = tags
+        self.ttl = ttl
+        self.attributes = {str(k): str(v) for k, v in fields.items()}
+
+    def _id(self, service_name, tags, fields):
+        return MetricId(
+            service_name, frozenset(tags), frozenset(fields.items())
+        )
+
 
 class Recorder:
     """
     Base type for recorders - objects that forward metrics over a transport
     """
-    def id(self, service_name, tags, fields):
-        return MetricId(
-            service_name, frozenset(tags), frozenset(fields.items())
-        )
-
-    def send(self, id, value, transport, suffix=""):
-        transport.send_event({
-            "tags": list(id.tags),
-            "attributes": {k: str(v) for (k, v) in id.attributes},
-            "service": id.name + suffix,
+    def send(self, metric, value, transport, suffix=""):
+        ttl = metric.ttl
+        event = {
+            "tags": metric.tags,
+            "attributes": metric.attributes,
+            "service": metric.name + suffix,
             "metric_f": value
-        })
+        }
+        if not ttl is None:
+            event['ttl'] = ttl
+
+        transport.send_event(event)
 
 
 class LogTransport:
@@ -160,33 +175,34 @@ class Gauge(Recorder):
     def reset(self):
         self.gauges = defaultdict(list)
 
-    def record(self, service_name, value, tags=[], attributes=dict()):
+    def record(self, service_name, value, ttl=None, tags=[], attributes=dict()):
         if self.source:
             attributes['source'] = self.source
-        id = self.id(service_name, tags, attributes)
-        self.gauges[id].append(value)
+        metric = Metric(service_name, value, ttl, tags, attributes)
+        self.gauges[metric.id].append(metric)
 
     def flush(self, transport):
-        for gauge in self.gauges:
+        for gauge in self.gauges.values():
 
-            _min = self.gauges[gauge][0]
-            _max = self.gauges[gauge][0]
+            first = gauge[0]
+            _min = first.value
+            _max = first.value
             _mean = 0
             _count = 0
             _total = 0
 
-            for v in self.gauges[gauge]:
+            for measurement in gauge:
                 _count = _count + 1
-                _total = _total + v
-                _max = max(_max, v)
-                _min = min(_min, v)
+                _total = _total + measurement.value
+                _max = max(_max, measurement.value)
+                _min = min(_min, measurement.value)
 
             _mean = (_total / _count)
 
-            self.send(gauge, _min, transport, ".min")
-            self.send(gauge, _max, transport, ".max")
-            self.send(gauge, _mean, transport, ".mean")
-            self.send(gauge, _count, transport, ".count")
+            self.send(first, _min, transport, ".min")
+            self.send(first, _max, transport, ".max")
+            self.send(first, _mean, transport, ".mean")
+            self.send(first, _count, transport, ".count")
 
         self.reset()
 
@@ -199,17 +215,20 @@ class Counter(Recorder):
     """
     def __init__(self, source):
         self.source = source
-        self.counters = collections.Counter()
+        self.counters = collections.defaultdict(list)
 
-    def record(self, service_name, value, tags, attributes):
+    def record(self, service_name, value, ttl, tags, attributes):
         if self.source:
             attributes['source'] = self.source
-        self.counters[self.id(service_name, tags, attributes)] += value
+        metric = Metric(service_name, value, ttl, tags, attributes)
+
+        self.counters[metric.id].append(metric)
 
     def flush(self, transport):
-        for counter in self.counters:
-            self.send(counter, self.counters[counter], transport)
-        self.counters = collections.Counter()
+        for counter in self.counters.values():
+            count = sum(m.value for m in counter)
+            self.send(counter[0], count, transport)
+        self.counters = defaultdict(list)
 
 
 class Timer:
@@ -241,17 +260,17 @@ class Metrics:
         self.gauges = Gauge(source)
         self.counters = Counter(source)
 
-    def recordGauge(self, service_name, value, tags=[], **kwargs):
-        self.gauges.record(service_name, value, tags, kwargs)
+    def recordGauge(self, service_name, value, ttl=None,tags=[], **kwargs):
+        self.gauges.record(service_name, value, ttl, tags, kwargs)
 
-    def incrementCounter(self, service_name, value=1, tags=[], **kwargs):
-        self.counters.record(service_name, value, tags, kwargs)
+    def incrementCounter(self, service_name, value=1, ttl=None,tags=[], **kwargs):
+        self.counters.record(service_name, value, ttl, tags, kwargs)
 
-    def decrementCounter(self, service_name, value=1, tags=[], **kwargs):
-        self.counters.record(service_name, 0 - value, tags, kwargs)
+    def decrementCounter(self, service_name, value=1, ttl=None,tags=[], **kwargs):
+        self.counters.record(service_name, 0 - value, ttl, tags, kwargs)
 
-    def time(self, service_name, tags=[], **kwargs):
-        return Timer(service_name, tags, kwargs, self.gauges)
+    def time(self, service_name, ttl=None, tags=[], **kwargs):
+        return Timer(service_name, ttl, tags, kwargs, self.gauges)
 
     def flush(self, is_closing=False):
         self.gauges.flush(self.transport)

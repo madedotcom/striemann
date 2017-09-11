@@ -37,3 +37,21 @@ class Test:
              'service': 'service_name',
              'tags': ['foo']}
         ]))
+
+    def test_ttl(self):
+        transport = striemann.metrics.InMemoryTransport()
+        metrics = striemann.metrics.Metrics(transport)
+
+        metrics.incrementCounter('heartbeat', ttl=7)
+        metrics.flush()
+
+        expect(transport.last_batch).to(equal([
+            {
+                'service': 'heartbeat',
+                'ttl': 7.0,
+                'metric_f': 1,
+                'tags': [],
+                'attributes': {}
+            }
+        ]))
+
