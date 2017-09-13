@@ -1,6 +1,7 @@
 from expects import expect
 from icdiff_expects import equal
-
+
+from unittest import mock
 import striemann.metrics
 
 
@@ -55,3 +56,45 @@ class Test:
             }
         ]))
 
+
+    @mock.patch('timeit.default_timer', side_effect=[0, 1, 0, 3])
+    def test_timers(self, timer):
+
+        transport = striemann.metrics.InMemoryTransport()
+        metrics = striemann.metrics.Metrics(transport)
+
+        with metrics.time('time'):
+            pass
+
+        with metrics.time('time'):
+            pass
+
+        metrics.flush()
+        expect(transport.last_batch[0]).to(equal(
+            {
+                'service': 'time.min',
+                'metric_f': 1,
+                'tags': [],
+                'attributes': {}
+            }))
+        expect(transport.last_batch[1]).to(equal(
+            {
+                'service': 'time.max',
+                'metric_f': 3,
+                'tags': [],
+                'attributes': {}
+            }))
+        expect(transport.last_batch[2]).to(equal(
+            {
+                'service': 'time.mean',
+                'metric_f': 2,
+                'tags': [],
+                'attributes': {}
+            }))
+        expect(transport.last_batch[3]).to(equal(
+            {
+                'service': 'time.count',
+                'metric_f': 2,
+                'tags': [],
+                'attributes': {}
+            }))

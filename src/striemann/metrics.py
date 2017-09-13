@@ -237,8 +237,9 @@ class Timer:
     Timers provide a context manager that times an operation and records a
     gauge with the elapsed time.
     """
-    def __init__(self, service_name, tags, attributes, gauge):
+    def __init__(self, service_name, ttl, tags, attributes, gauge):
         self.service_name = service_name
+        self.ttl = ttl
         self.tags = tags
         self.attributes = attributes
         self.recorder = gauge
@@ -249,7 +250,7 @@ class Timer:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         elapsed = timeit.default_timer() - self.start
         self.recorder.record(
-            self.service_name, elapsed, self.tags, self.attributes
+            self.service_name, elapsed, self.ttl, self.tags, self.attributes
         )
 
 
