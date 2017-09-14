@@ -125,6 +125,7 @@ class RiemannTransport:
             self._ensure_connected()
             self.transport.send(self._message)
         except Exception as e:
+            self.transport.disconnect()
             logging.error("Failed to flush metrics to riemann", exc_info=True)
         if is_closing:
             self.transport.disconnect()
