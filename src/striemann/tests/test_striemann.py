@@ -1,6 +1,5 @@
 from expects import expect
 from icdiff_expects import equal
-
 from unittest import mock
 import striemann.metrics
 
