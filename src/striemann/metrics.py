@@ -19,6 +19,8 @@ import logging
 import socket
 import timeit
 
+from ._deprecation import deprecated
+
 from riemann_client.client import Client
 from riemann_client.riemann_pb2 import Msg
 from riemann_client.transport import TCPTransport
@@ -111,22 +113,32 @@ class RiemannTransport:
 
         self.transport = TCPTransport(self.host, self.port, timeout)
         self._new_message()
+        self._connected = False
 
     def send_event(self, event):
         riemann_event = Client.create_event(event)
         self._message.events.add().MergeFrom(riemann_event)
 
     def _ensure_connected(self):
-        if not self.is_connected():
+        # This is just to avoid logging about failure on the first try
+        if not self._connected:
             self.transport.connect()
+            self._connected = True
 
     def flush(self, is_closing):
+        self._ensure_connected()
         try:
-            self._ensure_connected()
             self.transport.send(self._message)
         except Exception as e:
             self.transport.disconnect()
-            logging.error("Failed to flush metrics to riemann", exc_info=True)
+            logging.warning("Failed to flush metrics to riemann")
+            self.transport.connect()
+            try:
+                self.transport.send(self._message)
+            except Exception as e:
+                logging.error(
+                    "Failed twice to flush metrics to riemann", exc_info=True
+                )
         if is_closing:
             self.transport.disconnect()
         self._new_message()
@@ -134,14 +146,10 @@ class RiemannTransport:
     def _new_message(self):
         self._message = Msg()
 
+    @deprecated("Should be no need to check, will reconnect automatically")
     def is_connected(self):
         """Check whether the transport is connected."""
-        try:
-            # this will throw an exception whenever socket isn't connected
-            self.transport.socket.type
-            return True
-        except (AttributeError, RuntimeError, socket.error):
-            return False
+        return True
 
 
 class CompositeTransport:

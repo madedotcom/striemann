@@ -97,3 +97,61 @@ class Test:
                 'tags': [],
                 'attributes': {}
             }))
+
+
+class FakeRiemannClientTransport:
+
+    def __init__(self, log, send=lambda msg: None):
+        self.log = log
+        self._send = send
+
+    def send(self, msg):
+        self.log.append('try to send')
+        self._send(msg)
+        self.log.append('sent')
+
+    def connect(self):
+        self.log.append('connected')
+
+    def disconnect(self):
+        self.log.append('disconnected')
+
+
+class TestReconnect:
+
+    def test_we_reconnect_once_on_failure_regardless(self):
+        # regardless what state we think the connection is in
+        t = striemann.metrics.RiemannTransport('dummy host', 'dummy port')
+
+        failed = False
+
+        def fail_once(self_):
+            nonlocal failed
+            if not failed:
+                failed = True
+                raise Exception('bother')
+
+        log = []
+        t.transport = FakeRiemannClientTransport(log, fail_once)
+        t.flush(is_closing=False)
+        assert log == [
+            'connected',
+            'try to send',
+            'disconnected',
+            'connected',
+            'try to send',
+            'sent']
+
+    def test_in_normal_case_we_just_send(self):
+        t = striemann.metrics.RiemannTransport('dummy host', 'dummy port')
+
+        def succeed(self_):
+            pass
+
+        log = []
+        t.transport = FakeRiemannClientTransport(log, succeed)
+        t.flush(is_closing=False)
+        assert log == [
+            'connected',
+            'try to send',
+            'sent']
