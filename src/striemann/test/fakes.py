@@ -3,11 +3,7 @@
 For use in tests.
 """
 
-__all__ = [
-    'metric_id',
-    'FakeTimer',
-    'FakeMetrics',
-]
+__all__ = ["metric_id", "FakeTimer", "FakeMetrics"]
 
 from striemann.metrics import MetricId
 
@@ -17,7 +13,6 @@ def metric_id(service_name, tags, fields):
 
 
 class FakeTimer:
-
     def __init__(self, service_name, tags, attributes, metrics):
         self.metric_id = metric_id(service_name, tags, attributes)
         self.metrics = metrics
@@ -30,7 +25,6 @@ class FakeTimer:
 
 
 class FakeMetrics:
-
     def __init__(self):
         self.metrics = []
 

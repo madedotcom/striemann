@@ -9,15 +9,19 @@ def deprecated(alternative_text=""):
 
     alternative_text (str): What client should do instead
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             warnings.warn(
                 "Call to deprecated function {}. {}".format(
-                    func.__name__, alternative_text),
+                    func.__name__, alternative_text
+                ),
                 category=DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
