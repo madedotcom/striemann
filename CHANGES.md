@@ -30,5 +30,5 @@
 - TTL attributes are no longer coerced to strings
 
 
-[0.5]: https://github.com/madecom/photon-pump/compare/v0.4.0...v0.5.0
-[0.4]: https://github.com/madecom/photon-pump/compare/v0.3.0...v0.4.0
+[0.5]: https://github.com/madedotcom/striemann/compare/v0.4.0...v0.5
+[0.4]: https://github.com/madedotcom/striemann/compare/v0.3.0...v0.4.0
