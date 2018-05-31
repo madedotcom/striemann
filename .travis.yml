@@ -17,6 +17,7 @@ jobs:
       env: TOXENV=py35
     - stage: deploy
       python: 3.6
+      script: skip
       deploy:
         provider: pypi
         user: bobthemighty
