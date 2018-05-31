@@ -1,21 +1,25 @@
 sudo: false
-
 language: python
-
 matrix:
   include:
-    - python: 3.6
-      env: TOXENV=formatting
-    - python: 3.6
-      env: TOXENV=py36
-    - python: 3.5
-      env: TOXENV=py35
-
+  - python: 3.6
+    env: TOXENV=formatting
+  - python: 3.6
+    env: TOXENV=py36
+  - python: 3.5
+    env: TOXENV=py35
 install:
-  - pip install -r test-requirements.txt
-
+- pip install -r test-requirements.txt
 script:
-  - tox
-
+- tox
 after_success:
-  - codecov
+- codecov
+deploy:
+  provider: pypi
+  user: bobthemighty
+  password:
+    secure: fxGk/mQcKmsFrmg5J36j93gV7HBbNfp7IPWkNUP3aRCkLsBUSASFAu3tVZLfCq3JvMDcgOVWd6uOmSzNU2bGa1pjzhRkte2cRmNbIkVzMVBAuRRirReCXC63+ypqzm2Us2RS3TQRVjD3+/mOC2vD+/oL/3S7oWyq4sZfjyUqJIC+GlUvlGsVrNhGl0WirmBHWPYuXbbXM8jurfLQwqDKhugpSOoaQfklrE9Xj1EbGx505ydCJcwGE+AZ27Ue2qxm++kiBqtW6BOEDARKOx+bhmnJ/6Tz2Dn2Aci22yFNC1j9SRZH83r5G3ucRL800r02tWGcLfoVyk7X9yJAmwSsn2QE59ZKjnfIA+FVDoERpu9sm0gcTdz+qX9++6stKCvemD0XXz0rzm/CtHHBk8jxYbNxaSWJCV1Z12tYe1UCPuc9Fxl0wAyQXcj4GvTbbtvnV0CsX6OkNFUPPB8/4LIFdCunMGrNWrv1ujvAsqPccjG1/+Z9B+Egy3u4kM+iliLJ5Uh8wG+FixksYdo5qGtfb35SVNN04eiChq8DRybwpA0sxVoPDHLDbeKHa7h2stRn4SWHNF5Xgqd9fje2c8cynbFZGxb46PtYowRUkt8e3JP089TwxgGSRq0c+8xO1V0eZBCXY2ZF0B7ncrxqDrZ4bkSJiv3/3GAn/Yq2h3llhTw=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: madedotcom/striemann
