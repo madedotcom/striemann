@@ -1,13 +1,5 @@
 sudo: false
 language: python
-matrix:
-  include:
-  - python: 3.6
-    env: TOXENV=formatting
-  - python: 3.6
-    env: TOXENV=py36
-  - python: 3.5
-    env: TOXENV=py35
 install:
 - pip install -r test-requirements.txt
 script:
@@ -17,6 +9,12 @@ after_success:
 
 jobs:
   include:
+    - stage: test
+      python: 3.6
+      env: TOXENV=formatting,py36
+    - stage: test
+      python: 3.5
+      env: TOXENV=py35
     - stage: deploy
       python: 3.6
       deploy:
