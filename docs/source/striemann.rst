@@ -7,6 +7,7 @@ striemann.metrics module
 This is the main module for the package.
 
 .. autoclass:: striemann.metrics.Metrics
+    :members:
 
 .. automodule:: striemann.metrics
     :members:

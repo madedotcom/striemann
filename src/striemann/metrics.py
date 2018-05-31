@@ -337,7 +337,7 @@ class Metrics:
           per-metric basis.
 
     Examples:
-        >>> from striemann.metrics import InMemoryTransport, Metris
+        >>> from striemann.metrics import InMemoryTransport, Metrics
         >>> import pprint
         >>>
         >>> pp = pprint.PrettyPrinter(indent=4)
