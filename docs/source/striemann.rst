@@ -7,7 +7,12 @@ striemann.metrics module
 This is the main module for the package.
 
 .. autoclass:: striemann.metrics.Metrics
-    :members:
+    
+    .. automethod:: recordGauge
+    .. automethod:: incrementCounter
+    .. automethod:: decrementCounter
+    .. automethod:: recordRange
+    .. automethod:: time
 
 .. automodule:: striemann.metrics
     :members:
