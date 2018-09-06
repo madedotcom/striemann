@@ -21,7 +21,7 @@ class contain_metric(Matcher):
         else:
             reason_suffix = " with id {}".format(self.id)
 
-        for id, value in subject.metrics:
+        for id, value in subject:
             if id == self.id and (value == self.value or self.value is None):
                 return True, ["metric found" + reason_suffix]
 
