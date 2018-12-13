@@ -8,8 +8,8 @@ class Test:
     def test_gauges(self):
         transport = striemann.metrics.InMemoryTransport()
         metrics = striemann.metrics.Metrics(transport, source="test")
-        metrics.recordGauge("service_name", 2., tags=["spam"], ham="eggs")
-        metrics.recordGauge("service_name", 4., tags=["spam"], ham="eggs")
+        metrics.recordGauge("service_name", 2.0, tags=["spam"], ham="eggs")
+        metrics.recordGauge("service_name", 4.0, tags=["spam"], ham="eggs")
         metrics.incrementCounter("service_name", value=5, tags=["foo"], bar="baz")
         metrics.flush()
         expect(transport.last_batch).to(
