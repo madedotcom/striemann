@@ -64,3 +64,6 @@ class FakeMetrics(list):
 
     def time(self, service_name, tags=[], **kwargs):
         return FakeTimer(service_name, tags, kwargs, self)
+
+    def flush(self, is_closing=False):
+        self = list()
