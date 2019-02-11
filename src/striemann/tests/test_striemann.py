@@ -120,7 +120,6 @@ class ExplodingRiemannClientTransport(FakeRiemannClientTransport):
             raise ConnectionRefusedError
 
 
-
 class TestReconnect:
     def test_we_reconnect_once_on_failure_regardless(self):
         # regardless what state we think the connection is in
