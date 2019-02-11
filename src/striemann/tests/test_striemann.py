@@ -166,9 +166,8 @@ class TestReconnect:
             "connection refused",
             "connected",
             "try to send",
-            "sent"
+            "sent",
         ]
-
 
     def test_in_normal_case_we_just_send(self):
         t = striemann.metrics.RiemannTransport("dummy host", "dummy port")
