@@ -154,28 +154,35 @@ class RiemannTransport(Transport):
         riemann_event = Client.create_event(event)
         self._message.events.add().MergeFrom(riemann_event)
 
+    def _connect(self):
+        self.transport.connect()
+        self._connected = True
+
+    def _disconnect(self):
+        self.transport.disconnect()
+        self._connected = False
+
     def _ensure_connected(self):
         # This is just to avoid logging about failure on the first try
 
         if not self._connected:
-            self.transport.connect()
-            self._connected = True
+            self._connect()
 
     def flush(self, is_closing):
         self._ensure_connected()
         try:
             self.transport.send(self._message)
         except Exception as e:
-            self.transport.disconnect()
+            self._disconnect()
             logging.warning("Failed to flush metrics to riemann")
-            self.transport.connect()
             try:
+                self._connect()
                 self.transport.send(self._message)
             except Exception as e:
                 logging.error("Failed twice to flush metrics to riemann", exc_info=True)
 
         if is_closing:
-            self.transport.disconnect()
+            self._disconnect()
         self._new_message()
 
     def _new_message(self):

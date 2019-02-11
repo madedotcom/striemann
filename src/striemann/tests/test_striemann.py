@@ -99,6 +99,27 @@ class FakeRiemannClientTransport:
         self.log.append("disconnected")
 
 
+class ExplodingRiemannClientTransport(FakeRiemannClientTransport):
+    def __init__(self, log):
+        super().__init__(log)
+        self.connected = True
+
+    def send(self, msg):
+        self.log.append("try to send")
+        if self.connected:
+            self.log.append("sent")
+        else:
+            self.log.append("connection refused")
+            raise ConnectionRefusedError
+
+    def connect(self):
+        if self.connected:
+            self.log.append("connected")
+        else:
+            self.log.append("connection refused")
+            raise ConnectionRefusedError
+
+
 class TestReconnect:
     def test_we_reconnect_once_on_failure_regardless(self):
         # regardless what state we think the connection is in
@@ -119,6 +140,30 @@ class TestReconnect:
             "connected",
             "try to send",
             "disconnected",
+            "connected",
+            "try to send",
+            "sent",
+        ]
+
+    def test_connection_refused_reconnection(self):
+        t = striemann.metrics.RiemannTransport("dummy host", "dummy port")
+        log = []
+        t.transport = ExplodingRiemannClientTransport(log)
+
+        t.flush(is_closing=False)
+        t.transport.connected = False
+        t.flush(is_closing=False)
+        t.transport.connected = True
+        t.flush(is_closing=False)
+
+        assert log == [
+            "connected",
+            "try to send",
+            "sent",
+            "try to send",
+            "connection refused",
+            "disconnected",
+            "connection refused",
             "connected",
             "try to send",
             "sent",
