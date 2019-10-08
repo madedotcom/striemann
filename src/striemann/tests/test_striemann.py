@@ -1,7 +1,10 @@
 from expects import expect
 from icdiff_expects import equal
 from unittest import mock
+from datetime import datetime
 import striemann.metrics
+import sys
+import json
 
 
 class Test:
@@ -20,12 +23,14 @@ class Test:
                         "metric_f": 4.0,
                         "service": "service_name",
                         "tags": ["spam"],
+                        "description": "gauge",
                     },
                     {
                         "attributes": {"bar": "baz", "source": "test"},
                         "metric_f": 5,
                         "service": "service_name",
                         "tags": ["foo"],
+                        "description": "counter",
                     },
                 ]
             )
@@ -47,6 +52,7 @@ class Test:
                         "metric_f": 1,
                         "tags": [],
                         "attributes": {},
+                        "description": "counter",
                     }
                 ]
             )
@@ -67,19 +73,85 @@ class Test:
         metrics.flush()
 
         expect(transport.last_batch[0]).to(
-            equal({"service": "time.min", "metric_f": 1, "tags": [], "attributes": {}})
+            equal(
+                {
+                    "service": "time.min",
+                    "metric_f": 1,
+                    "tags": [],
+                    "attributes": {},
+                    "description": "range",
+                }
+            )
         )
         expect(transport.last_batch[1]).to(
-            equal({"service": "time.max", "metric_f": 3, "tags": [], "attributes": {}})
+            equal(
+                {
+                    "service": "time.max",
+                    "metric_f": 3,
+                    "tags": [],
+                    "attributes": {},
+                    "description": "range",
+                }
+            )
         )
         expect(transport.last_batch[2]).to(
-            equal({"service": "time.mean", "metric_f": 2, "tags": [], "attributes": {}})
+            equal(
+                {
+                    "service": "time.mean",
+                    "metric_f": 2,
+                    "tags": [],
+                    "attributes": {},
+                    "description": "range",
+                }
+            )
         )
         expect(transport.last_batch[3]).to(
             equal(
-                {"service": "time.count", "metric_f": 2, "tags": [], "attributes": {}}
+                {
+                    "service": "time.count",
+                    "metric_f": 2,
+                    "tags": [],
+                    "attributes": {},
+                    "description": "range",
+                }
             )
         )
+
+
+class TestStdoutTransport:
+    def test_transport(self, capsys):
+        transport = striemann.metrics.StdoutTransport(
+            service="foo", owner="baz", env="local"
+        )
+
+        expect(transport.batch).to(equal([]))
+        expect(transport.service).to(equal("foo"))
+        expect(transport.owner).to(equal("baz"))
+        expect(transport.env).to(equal("local"))
+
+        metrics = striemann.metrics.Metrics(transport, source="test")
+        metrics.incrementCounter("service_name", value=5, tags=["foo"], bar="baz")
+
+        metrics.flush()
+
+        out, err = capsys.readouterr()
+
+        out_json = json.loads(out)
+        time = out_json["metric"]["time"]
+
+        assert json.loads(out) == {
+            "metric": {
+                "name": "service_name",
+                "value": 5,
+                "description": "counter",
+                "tags": ["foo"],
+                "attributes": {"bar": "baz", "source": "test"},
+                "env": "local",
+                "owner": "baz",
+                "service": "foo",
+                "time": time,
+            }
+        }
 
 
 class FakeRiemannClientTransport:

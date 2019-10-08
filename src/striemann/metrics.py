@@ -2,6 +2,7 @@ __all__ = [
     "MetricId",
     "Recorder",
     "LogTransport",
+    "StdoutTransport",
     "InMemoryTransport",
     "RiemannTransport",
     "CompositeTransport",
@@ -17,6 +18,7 @@ import collections
 import json
 import logging
 import timeit
+from datetime import datetime
 from collections import defaultdict, namedtuple
 
 from riemann_client.client import Client
@@ -43,13 +45,15 @@ class Metric:
         ttl (Optional[int]): The time-to-live of the metric in seconds.
         tags (List[str]): A list of string tags to apply to the metric.
         fields (Dict[str, Any]): A set of key-value pairs to apply to the metric.
+        description (str): The metric type: counter, gauge or range
     """
 
-    def __init__(self, service, value, ttl, tags, fields):
+    def __init__(self, service, value, ttl, tags, fields, description=None):
         self.tags = tags or []
         self.value = value
         self.name = service
         self.ttl = ttl
+        self.description = description
         self.id = self._id(self.name, self.tags, fields)
         self.attributes = {str(k): str(v) for k, v in fields.items()}
 
@@ -63,12 +67,14 @@ class Recorder:
     """
 
     def send(self, metric, value, transport, suffix=""):
+
         ttl = metric.ttl
         event = {
             "tags": metric.tags,
             "attributes": metric.attributes,
             "service": metric.name + suffix,
             "metric_f": value,
+            "description": metric.description,
         }
 
         if ttl is not None:
@@ -115,6 +121,55 @@ class LogTransport(Transport):
 
     def flush(self, is_closing):
         pass
+
+
+class StdoutTransport(Transport):
+
+    """
+    Simple Transport that writes metrics to standard output.
+
+    The metrics are written in a format suited to parsing by elasticsearch
+
+    The format is similar to the JSON format used by other striemann transports, but:
+
+    - Adds a metric type to the data to make them distinguishable (counter/gauge/range)
+
+    - Add specific information to make metrics more visible in terms of env, service and ownership
+
+    - Wraps the data in a "metric" key to make it easier to distinguish from other messages
+      grabbed from stdout
+    """
+
+    def __init__(self, service, owner, env):
+        self.batch = []
+        self.service = service
+        self.owner = owner
+        self.env = env
+
+    def send_event(self, event):
+
+        self.batch.append(
+            {
+                "metric": {
+                    "name": event["service"],
+                    "value": event["metric_f"],
+                    "description": event["description"],
+                    "tags": event["tags"],
+                    "attributes": event["attributes"],
+                    "env": self.env,
+                    "owner": self.owner,
+                    "service": self.service,
+                }
+            }
+        )
+
+    def flush(self, is_closing):
+        for event in self.batch:
+            now = datetime.now()
+            event["metric"]["time"] = now.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+            print(json.dumps(event))
+
+        self.batch = []
 
 
 class InMemoryTransport(Transport):
@@ -231,7 +286,8 @@ class Range(Recorder):
     def record(self, service_name, value, ttl=None, tags=[], attributes=dict()):
         if self._source:
             attributes["source"] = self._source
-        metric = Metric(service_name, value, ttl, tags, attributes)
+
+        metric = Metric(service_name, value, ttl, tags, attributes, "range")
         self._metrics[metric.id].append(metric)
 
     def flush(self, transport):
@@ -274,8 +330,8 @@ class Counter(Recorder):
     def record(self, service_name, value, ttl, tags, attributes):
         if self._source:
             attributes["source"] = self._source
-        metric = Metric(service_name, value, ttl, tags, attributes)
 
+        metric = Metric(service_name, value, ttl, tags, attributes, "counter")
         self._counters[metric.id].append(metric)
 
     def flush(self, transport):
@@ -299,8 +355,8 @@ class Gauge(Recorder):
     def record(self, service_name, value, ttl, tags, attributes):
         if self._source:
             attributes["source"] = self._source
-        metric = Metric(service_name, value, ttl, tags, attributes)
 
+        metric = Metric(service_name, value, ttl, tags, attributes, "gauge")
         self._gauges[metric.id] = metric
 
     def flush(self, transport):
