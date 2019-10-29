@@ -6,24 +6,23 @@ script:
 - tox
 after_success:
 - codecov
-
 jobs:
   include:
-    - stage: test
-      python: 3.6
-      env: TOXENV=formatting,py36
-    - stage: test
-      python: 3.5
-      env: TOXENV=py35
-    - stage: deploy
-      python: 3.6
-      script: skip
-      deploy:
-        provider: pypi
-        user: bobthemighty
-        password:
-          secure: fxGk/mQcKmsFrmg5J36j93gV7HBbNfp7IPWkNUP3aRCkLsBUSASFAu3tVZLfCq3JvMDcgOVWd6uOmSzNU2bGa1pjzhRkte2cRmNbIkVzMVBAuRRirReCXC63+ypqzm2Us2RS3TQRVjD3+/mOC2vD+/oL/3S7oWyq4sZfjyUqJIC+GlUvlGsVrNhGl0WirmBHWPYuXbbXM8jurfLQwqDKhugpSOoaQfklrE9Xj1EbGx505ydCJcwGE+AZ27Ue2qxm++kiBqtW6BOEDARKOx+bhmnJ/6Tz2Dn2Aci22yFNC1j9SRZH83r5G3ucRL800r02tWGcLfoVyk7X9yJAmwSsn2QE59ZKjnfIA+FVDoERpu9sm0gcTdz+qX9++6stKCvemD0XXz0rzm/CtHHBk8jxYbNxaSWJCV1Z12tYe1UCPuc9Fxl0wAyQXcj4GvTbbtvnV0CsX6OkNFUPPB8/4LIFdCunMGrNWrv1ujvAsqPccjG1/+Z9B+Egy3u4kM+iliLJ5Uh8wG+FixksYdo5qGtfb35SVNN04eiChq8DRybwpA0sxVoPDHLDbeKHa7h2stRn4SWHNF5Xgqd9fje2c8cynbFZGxb46PtYowRUkt8e3JP089TwxgGSRq0c+8xO1V0eZBCXY2ZF0B7ncrxqDrZ4bkSJiv3/3GAn/Yq2h3llhTw=
-        on:
-          tags: true
-          distributions: sdist bdist_wheel
-          repo: madedotcom/striemann
+  - stage: test
+    python: 3.6
+    env: TOXENV=formatting,py36
+  - stage: test
+    python: 3.5
+    env: TOXENV=py35
+  - stage: deploy
+    python: 3.6
+    script: skip
+    deploy:
+      provider: pypi
+      user: __token__
+      password:
+        secure: G4BJpzI55W0ttnz2gVQ3PwnEFgsaYx8ek5yD0eL7y0v2l7UTYnQLGX+fP15mEfdJf1CSyogHROexOZ6H8Se17JFbmEJilcVHcoJLYaqxLTWU3Mpk5hf9uvD47Ran2GR08LosPv7kJMDAB/pqudtOHrNPhgVvfnhJZSXOZdyRV6ZUiN5rb6sbXRh9wKzszuqYh6ue+PEgINW1ezQCIKnb8d//ldkgNV5N/IRIEzI/60DCXe2BgbCvIiVsEUbSvCEli6QE8nb9VIY3W8LhZGB6azeqIhXkdm/7BGXujIckP5xTb4WwkNGOtlZbQNdRvFMksaKs61FJHa7Gs8YX1/xdClVuOAvJPR4EvLlSusKeOfA5Yqah0T+EW26r77GOlm5+L//d8I084UZxnj+mg3BJLUIXKLH+ofrYNAheJRiAEWbO5wsF3NA30/ncIvW8x4rQoJSgfVh1dNrHLBe6NophsZYGB20NSTsjjqKeatDGW1/Aej4Z4Sw8CCz9EGSDtFAjYz6o2kMla47AU+wNl7RyjMsGvJ2kAEpso3VUZHJvCCd34hQtjBcBw7CNuQWSBCfKAcS/W9fkw/CED+9Y5Dkcln+oqAraO+i84snSEql4t2wfm+8OlpvkwJcZ7VWATjPbyD+XCRpBErMdJatPHnAgUUeT7kV6uxCnNOwfGPlqIXg=
+      on:
+        tags: true
+        distributions: sdist bdist_wheel
+        repo: madedotcom/striemann
