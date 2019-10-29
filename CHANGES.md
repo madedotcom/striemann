@@ -1,3 +1,11 @@
+## [0.7] - 2019-10-29
+### Changes
+ - Added a new transport `StdoutTransport`, similar to the LogTransport, that will write logs to 
+ `stdout`. The metrics are written in a format suited to parsing by `elasticsearch`
+ and adds to the current structure information for `time` which is the exact
+ time when the metrics are recorded and `description` to have more visibility 
+ on the type of the metric (gauge, counter, time, etc)
+
 ## [0.6] - 2018-05-31
 Added documentation on Read the Docs.
 ### Deprecated
