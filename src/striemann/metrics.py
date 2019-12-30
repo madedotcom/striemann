@@ -154,7 +154,7 @@ class StdoutTransport(Transport):
                     "name": event["service"],
                     "value": event["metric_f"],
                     "description": event["description"],
-                    "tags": event["tags"],
+                    "tags": event.get("tags", []),
                     "attributes": event["attributes"],
                     "env": self.env,
                     "owner": self.owner,
