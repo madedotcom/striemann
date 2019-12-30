@@ -155,7 +155,7 @@ class StdoutTransport(Transport):
                     "value": event["metric_f"],
                     "description": event["description"],
                     "tags": event.get("tags", []),
-                    "attributes": event["attributes"],
+                    "attributes": event.get("attributes", {}),
                     "env": self.env,
                     "owner": self.owner,
                     "service": self.service,

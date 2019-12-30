@@ -153,7 +153,7 @@ class TestStdoutTransport:
             }
         }
 
-    def test_transport_no_tags(self, capsys):
+    def test_transport_no_tags_and_attributes(self, capsys):
         transport = striemann.metrics.StdoutTransport(
             service="foo", owner="baz", env="local"
         )
@@ -163,7 +163,7 @@ class TestStdoutTransport:
         expect(transport.owner).to(equal("baz"))
         expect(transport.env).to(equal("local"))
 
-        metrics = striemann.metrics.Metrics(transport, source="test")
+        metrics = striemann.metrics.Metrics(transport)
         metrics.incrementCounter("service_name")
 
         metrics.flush()
@@ -179,7 +179,7 @@ class TestStdoutTransport:
                 "value": 1,
                 "description": "counter",
                 "tags": [],
-                "attributes": {"source": "test"},
+                "attributes": {},
                 "env": "local",
                 "owner": "baz",
                 "service": "foo",
