@@ -143,9 +143,12 @@ class TestStdoutTransport:
             "metric": {
                 "name": "service_name",
                 "value": 5,
-                "description": "counter",
-                "tags": ["foo"],
-                "attributes": {"bar": "baz", "source": "test"},
+                "data": {
+                    "tags": ["foo"],
+                    "description": "counter",
+                    "bar": "baz",
+                    "source": "test",
+                },
                 "env": "local",
                 "owner": "baz",
                 "service": "foo",
@@ -177,9 +180,7 @@ class TestStdoutTransport:
             "metric": {
                 "name": "service_name",
                 "value": 1,
-                "description": "counter",
-                "tags": [],
-                "attributes": {},
+                "data": {"description": "counter", "tags": []},
                 "env": "local",
                 "owner": "baz",
                 "service": "foo",
