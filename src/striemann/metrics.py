@@ -148,14 +148,19 @@ class StdoutTransport(Transport):
 
     def send_event(self, event):
 
+        # initialize a data dict and merge attributes
+        # with tags and description to use in metric
+        data = {}
+        data["tags"] = event.get("tags", [])
+        data["description"] = event["description"]
+        data.update(event.get("attributes", {}))
+
         self.batch.append(
             {
                 "metric": {
                     "name": event["service"],
                     "value": event["metric_f"],
-                    "description": event["description"],
-                    "tags": event.get("tags", []),
-                    "attributes": event.get("attributes", {}),
+                    "data": data,
                     "env": self.env,
                     "owner": self.owner,
                     "service": self.service,
