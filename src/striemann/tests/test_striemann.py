@@ -198,12 +198,15 @@ class TestStdoutTransport:
         expect(transport.owner).to(equal("baz"))
         expect(transport.env).to(equal("local"))
 
-        attributes_dict = dict(
-            store="store1", country="uk", carrier="dhl", warehouse="wh1",
-        )
+        attributes = {
+            "store": "store1",
+            "country": "uk",
+            "carrier": "dhl",
+            "warehouse": "wh1",
+        }
 
         metrics = striemann.metrics.Metrics(transport)
-        metrics.incrementCounter("service_name", value=5, **attributes_dict)
+        metrics.incrementCounter("service_name", value=5, **attributes)
 
         metrics.flush()
 
