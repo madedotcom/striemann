@@ -208,6 +208,8 @@ class TestStdoutTransport:
         metrics = striemann.metrics.Metrics(transport)
         metrics.incrementCounter("service_name", value=5, **attributes)
 
+        print(metric.get("attributes"))
+
         metrics.flush()
 
         out, err = capsys.readouterr()
