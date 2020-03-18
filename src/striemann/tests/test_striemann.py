@@ -208,7 +208,7 @@ class TestStdoutTransport:
         metrics = striemann.metrics.Metrics(transport)
         metrics.incrementCounter("service_name", value=5, **attributes)
 
-        print(metric.get("attributes"))
+        print(metrics.get("attributes"))
 
         metrics.flush()
 
