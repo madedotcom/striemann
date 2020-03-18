@@ -154,12 +154,12 @@ class StdoutTransport(Transport):
         data["tags"] = event.get("tags", [])
         data["description"] = event["description"]
 
-        print(data)
+        print(json.dumps(data))
 
         data.update(event.get("attributes", {}))
 
-        print(event.get("attributes"))
-        print(data)
+        print(json.dumps(event.get("attributes")))
+        print(json.dumps(data))
 
         self.batch.append(
             {
