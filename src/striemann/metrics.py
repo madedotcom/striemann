@@ -152,14 +152,8 @@ class StdoutTransport(Transport):
         # with tags and description to use in metric
         data = {}
         data["tags"] = event.get("tags", [])
-        data["description"] = event["description"]
-
-        print(json.dumps(data))
-
-        data.update(event.get("attributes", {}))
-
-        print(json.dumps(event.get("attributes")))
-        print(json.dumps(data))
+        data["description"] = event["description"]        
+        data.update(event.get("attributes", {}))        
 
         self.batch.append(
             {
