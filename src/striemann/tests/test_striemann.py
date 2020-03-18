@@ -215,7 +215,7 @@ class TestStdoutTransport:
         assert json.loads(out) == {
             "metric": {
                 "name": "service_name",
-                "value": 1,
+                "value": 5,
                 "data": {
                     "description": "counter",
                     "tags": [],
