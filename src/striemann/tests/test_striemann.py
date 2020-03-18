@@ -188,6 +188,49 @@ class TestStdoutTransport:
             }
         }
 
+    def test_transport_with_dict_of_attributes(self, capsys):
+        transport = striemann.metrics.StdoutTransport(
+            service="foo", owner="baz", env="local"
+        )
+
+        expect(transport.batch).to(equal([]))
+        expect(transport.service).to(equal("foo"))
+        expect(transport.owner).to(equal("baz"))
+        expect(transport.env).to(equal("local"))
+
+        attributes_dict = dict(
+            store="store1", country="uk", carrier="dhl", warehouse="wh1",
+        )
+
+        metrics = striemann.metrics.Metrics(transport)
+        metrics.incrementCounter("service_name", value=5, **attributes_dict)
+
+        metrics.flush()
+
+        out, err = capsys.readouterr()
+
+        out_json = json.loads(out)
+        time = out_json["metric"]["time"]
+
+        assert json.loads(out) == {
+            "metric": {
+                "name": "service_name",
+                "value": 1,
+                "data": {
+                    "description": "counter",
+                    "tags": [],
+                    "store": "store1",
+                    "country": "uk",
+                    "carrier": "dhl",
+                    "warehouse": "wh1",
+                },
+                "env": "local",
+                "owner": "baz",
+                "service": "foo",
+                "time": time,
+            }
+        }
+
 
 class FakeRiemannClientTransport:
     def __init__(self, log, send=lambda msg: None):
