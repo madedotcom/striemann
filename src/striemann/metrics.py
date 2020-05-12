@@ -254,6 +254,7 @@ class RiemannTransport(Transport):
 
         return True
 
+
 class CompositeTransport(Transport):
 
     """
