@@ -15,11 +15,12 @@ __all__ = [
 
 
 import collections
+import copy
 import json
 import logging
 import timeit
-from datetime import datetime
 from collections import defaultdict, namedtuple
+from datetime import datetime
 
 from riemann_client.client import Client
 from riemann_client.riemann_pb2 import Msg
@@ -147,7 +148,6 @@ class StdoutTransport(Transport):
         self.env = env
 
     def send_event(self, event):
-
         # initialize a data dict and merge attributes
         # with tags and description to use in metric
         data = {}
@@ -254,7 +254,6 @@ class RiemannTransport(Transport):
 
         return True
 
-
 class CompositeTransport(Transport):
 
     """
@@ -267,7 +266,7 @@ class CompositeTransport(Transport):
 
     def send_event(self, event):
         for t in self._transports:
-            t.send_event(event)
+            t.send_event(copy.deepcopy(event))
 
     def flush(self, is_closing):
         for t in self._transports:
