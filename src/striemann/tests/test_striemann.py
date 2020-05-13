@@ -286,3 +286,48 @@ class TestReconnect:
         t.transport = FakeRiemannClientTransport(log, succeed)
         t.flush(is_closing=False)
         assert log == ["connected", "try to send", "sent"]
+
+
+class TestCompositeTransport:
+    def test_composite_riemann_and_stdout(self, capsys):
+        def succeed(self_):
+            pass
+
+        riemann_log = []
+        riemann_transport = striemann.metrics.RiemannTransport(
+            "dummy host", "dummy port"
+        )
+        riemann_transport.transport = FakeRiemannClientTransport(riemann_log, succeed)
+        stdout_transport = striemann.metrics.StdoutTransport(
+            service="foo", owner="baz", env="local"
+        )
+        transport = striemann.metrics.CompositeTransport(
+            riemann_transport, stdout_transport
+        )
+        metrics = striemann.metrics.Metrics(transport, source="test")
+        metrics.incrementCounter("service_name", value=5, tags=["foo"], bar="baz")
+
+        metrics.flush()
+
+        out, err = capsys.readouterr()
+
+        out_json = json.loads(out)
+        time = out_json["metric"]["time"]
+
+        assert riemann_log == ["connected", "try to send", "sent"]
+        assert json.loads(out) == {
+            "metric": {
+                "name": "service_name",
+                "value": 5,
+                "data": {
+                    "tags": ["foo"],
+                    "description": "counter",
+                    "bar": "baz",
+                    "source": "test",
+                },
+                "env": "local",
+                "owner": "baz",
+                "service": "foo",
+                "time": time,
+            }
+        }
