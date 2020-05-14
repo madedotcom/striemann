@@ -299,20 +299,20 @@ class Range(Recorder):
         current_max = current_summary.get("max")
         current_min = current_summary.get("min")
         current_count = current_summary.get("count", 0)
-        current_mean = current_summary.get("mean", 0)
+        current_total = current_summary.get("total", 0)
 
         new_value = new_metric.value
         new_min = min(current_min, new_value) if current_min is not None else new_value
         new_max = max(current_max, new_value) if current_max is not None else new_value
         new_count = current_count + 1
-        new_mean = current_mean + (new_value - current_mean) / new_count
+        new_total = current_total + new_value
 
         self._metrics_summaries[new_metric.id] = {
             "first": first_metric if first_metric else new_metric,
             "min": new_min,
             "max": new_max,
             "count": new_count,
-            "mean": new_mean,
+            "total": new_total,
         }
 
     def flush(self, transport):
@@ -321,7 +321,7 @@ class Range(Recorder):
 
             self.send(first, summary["min"], transport, ".min")
             self.send(first, summary["max"], transport, ".max")
-            self.send(first, summary["mean"], transport, ".mean")
+            self.send(first, summary["total"] / summary["count"], transport, ".mean")
             self.send(first, summary["count"], transport, ".count")
 
         self._reset()

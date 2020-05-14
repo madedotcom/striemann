@@ -73,7 +73,9 @@ class Test:
         assert stored_data["min"] == 1
         assert stored_data["max"] == 3
         assert stored_data["count"] == 2
-        assert stored_data["mean"] == 2
+        assert (
+            stored_data["total"] == 4,
+        ), 'We call metrics.time("time") twice, once for 1 sec and once for 3 sec so 4 sec in total (see side_effect)'
         first = stored_data["first"]
         assert isinstance(first, striemann.metrics.Metric)
 
@@ -85,7 +87,7 @@ class Test:
         assert stored_data["min"] == 1
         assert stored_data["max"] == 5
         assert stored_data["count"] == 3
-        assert stored_data["mean"] == 3
+        assert stored_data["total"] == 9
         assert stored_data["first"] is first
 
     @mock.patch("timeit.default_timer", side_effect=[0, 1, 0, 3])
