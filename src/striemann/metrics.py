@@ -286,37 +286,45 @@ class Range(Recorder):
         self._reset()
 
     def _reset(self):
-        self._metrics = defaultdict(list)
+        self._metrics = defaultdict(dict)
 
     def record(self, service_name, value, ttl=None, tags=[], attributes=dict()):
         if self._source:
             attributes["source"] = self._source
 
         metric = Metric(service_name, value, ttl, tags, attributes, "range")
-        self._metrics[metric.id].append(metric)
+        current_metric = self._metrics[metric.id]
+        current_max = current_metric.get("max")
+        current_min = current_metric.get("min")
+        current_count = current_metric.get("count", 0)
+        current_mean = current_metric.get("mean", 0)
+
+        new_value = metric.value if metric.value is not None else 0
+        new_min = min(current_min, new_value) if current_min is not None else new_value
+        new_max = max(current_max, new_value) if current_max is not None else new_value
+        new_count = current_count + 1
+        # formulae from https://math.stackexchange.com/questions/22348/how-to-add-and-subtract-values-from-an-average
+        new_mean = current_mean + (new_value - current_mean) / new_count
+
+        self._metrics[metric.id] = {
+            "first": metric,
+            "min": new_min,
+            "max": new_max,
+            "count": new_count,
+            "mean": new_mean,
+        }
 
     def flush(self, transport):
         for metric in self._metrics.values():
+            first = metric["first"]
 
-            first = metric[0]
-            _min = first.value
-            _max = first.value
-            _mean = 0
-            _count = 0
-            _total = 0
-
-            for measurement in metric:
-                _count = _count + 1
-                _total = _total + measurement.value
-                _max = max(_max, measurement.value)
-                _min = min(_min, measurement.value)
-
-            _mean = _total / _count
+            _max = max(first.value, metric["max"])
+            _min = min(first.value, metric["min"])
 
             self.send(first, _min, transport, ".min")
             self.send(first, _max, transport, ".max")
-            self.send(first, _mean, transport, ".mean")
-            self.send(first, _count, transport, ".count")
+            self.send(first, metric["mean"], transport, ".mean")
+            self.send(first, metric["count"], transport, ".count")
 
         self._reset()
 
