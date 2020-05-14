@@ -1,9 +1,7 @@
 from expects import expect
 from icdiff_expects import equal
 from unittest import mock
-from datetime import datetime
 import striemann.metrics
-import sys
 import json
 
 
@@ -57,6 +55,40 @@ class Test:
                 ]
             )
         )
+
+    @mock.patch("timeit.default_timer", side_effect=[0, 1, 0, 3, 0, 5])
+    def test_timers_internal_storage(self, timer):
+
+        transport = striemann.metrics.InMemoryTransport()
+        metrics = striemann.metrics.Metrics(transport)
+
+        with metrics.time("time"):
+            pass
+
+        with metrics.time("time"):
+            pass
+
+        [stored_data] = list(metrics._ranges._metrics_summaries.values())
+        assert isinstance(stored_data, dict)
+        assert stored_data["min"] == 1
+        assert stored_data["max"] == 3
+        assert stored_data["count"] == 2
+        assert (
+            stored_data["total"] == 4,
+        ), 'We call metrics.time("time") twice, once for 1 sec and once for 3 sec so 4 sec in total (see side_effect)'
+        first = stored_data["first"]
+        assert isinstance(first, striemann.metrics.Metric)
+
+        with metrics.time("time"):
+            pass
+
+        [stored_data] = list(metrics._ranges._metrics_summaries.values())
+        assert isinstance(stored_data, dict)
+        assert stored_data["min"] == 1
+        assert stored_data["max"] == 5
+        assert stored_data["count"] == 3
+        assert stored_data["total"] == 9
+        assert stored_data["first"] is first
 
     @mock.patch("timeit.default_timer", side_effect=[0, 1, 0, 3])
     def test_timers(self, timer):

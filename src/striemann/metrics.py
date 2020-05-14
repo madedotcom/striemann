@@ -276,7 +276,7 @@ class CompositeTransport(Transport):
 
 class Range(Recorder):
     """
-    Summarys record the range of a value across a set of datapoints,
+    Summaries record the range of a value across a set of datapoints,
     eg response time, items cleared from cache, and forward aggregated
     metrics to describe that range.
     """
@@ -286,37 +286,43 @@ class Range(Recorder):
         self._reset()
 
     def _reset(self):
-        self._metrics = defaultdict(list)
+        self._metrics_summaries = defaultdict(dict)
 
     def record(self, service_name, value, ttl=None, tags=[], attributes=dict()):
         if self._source:
             attributes["source"] = self._source
 
-        metric = Metric(service_name, value, ttl, tags, attributes, "range")
-        self._metrics[metric.id].append(metric)
+        new_metric = Metric(service_name, value, ttl, tags, attributes, "range")
+
+        current_summary = self._metrics_summaries[new_metric.id]
+        first_metric = current_summary.get("first")
+        current_max = current_summary.get("max")
+        current_min = current_summary.get("min")
+        current_count = current_summary.get("count", 0)
+        current_total = current_summary.get("total", 0)
+
+        new_value = new_metric.value
+        new_min = min(current_min, new_value) if current_min is not None else new_value
+        new_max = max(current_max, new_value) if current_max is not None else new_value
+        new_count = current_count + 1
+        new_total = current_total + new_value
+
+        self._metrics_summaries[new_metric.id] = {
+            "first": first_metric if first_metric else new_metric,
+            "min": new_min,
+            "max": new_max,
+            "count": new_count,
+            "total": new_total,
+        }
 
     def flush(self, transport):
-        for metric in self._metrics.values():
+        for summary in self._metrics_summaries.values():
+            first = summary["first"]
 
-            first = metric[0]
-            _min = first.value
-            _max = first.value
-            _mean = 0
-            _count = 0
-            _total = 0
-
-            for measurement in metric:
-                _count = _count + 1
-                _total = _total + measurement.value
-                _max = max(_max, measurement.value)
-                _min = min(_min, measurement.value)
-
-            _mean = _total / _count
-
-            self.send(first, _min, transport, ".min")
-            self.send(first, _max, transport, ".max")
-            self.send(first, _mean, transport, ".mean")
-            self.send(first, _count, transport, ".count")
+            self.send(first, summary["min"], transport, ".min")
+            self.send(first, summary["max"], transport, ".max")
+            self.send(first, summary["total"] / summary["count"], transport, ".mean")
+            self.send(first, summary["count"], transport, ".count")
 
         self._reset()
 
