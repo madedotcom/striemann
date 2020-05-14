@@ -276,7 +276,7 @@ class CompositeTransport(Transport):
 
 class Range(Recorder):
     """
-    Summarys record the range of a value across a set of datapoints,
+    Summaries record the range of a value across a set of datapoints,
     eg response time, items cleared from cache, and forward aggregated
     metrics to describe that range.
     """
@@ -286,28 +286,29 @@ class Range(Recorder):
         self._reset()
 
     def _reset(self):
-        self._metrics = defaultdict(dict)
+        self._metrics_summaries = defaultdict(dict)
 
     def record(self, service_name, value, ttl=None, tags=[], attributes=dict()):
         if self._source:
             attributes["source"] = self._source
 
-        metric = Metric(service_name, value, ttl, tags, attributes, "range")
-        current_metric = self._metrics[metric.id]
-        current_max = current_metric.get("max")
-        current_min = current_metric.get("min")
-        current_count = current_metric.get("count", 0)
-        current_mean = current_metric.get("mean", 0)
+        new_metric = Metric(service_name, value, ttl, tags, attributes, "range")
 
-        new_value = metric.value if metric.value is not None else 0
+        current_summary = self._metrics_summaries[new_metric.id]
+        first_metric = current_summary.get("first")
+        current_max = current_summary.get("max")
+        current_min = current_summary.get("min")
+        current_count = current_summary.get("count", 0)
+        current_mean = current_summary.get("mean", 0)
+
+        new_value = new_metric.value
         new_min = min(current_min, new_value) if current_min is not None else new_value
         new_max = max(current_max, new_value) if current_max is not None else new_value
         new_count = current_count + 1
-        # formulae from https://math.stackexchange.com/questions/22348/how-to-add-and-subtract-values-from-an-average
         new_mean = current_mean + (new_value - current_mean) / new_count
 
-        self._metrics[metric.id] = {
-            "first": metric,
+        self._metrics_summaries[new_metric.id] = {
+            "first": first_metric if first_metric else new_metric,
             "min": new_min,
             "max": new_max,
             "count": new_count,
@@ -315,16 +316,13 @@ class Range(Recorder):
         }
 
     def flush(self, transport):
-        for metric in self._metrics.values():
-            first = metric["first"]
+        for summary in self._metrics_summaries.values():
+            first = summary["first"]
 
-            _max = max(first.value, metric["max"])
-            _min = min(first.value, metric["min"])
-
-            self.send(first, _min, transport, ".min")
-            self.send(first, _max, transport, ".max")
-            self.send(first, metric["mean"], transport, ".mean")
-            self.send(first, metric["count"], transport, ".count")
+            self.send(first, summary["min"], transport, ".min")
+            self.send(first, summary["max"], transport, ".max")
+            self.send(first, summary["mean"], transport, ".mean")
+            self.send(first, summary["count"], transport, ".count")
 
         self._reset()
 

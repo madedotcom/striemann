@@ -68,24 +68,25 @@ class Test:
         with metrics.time("time"):
             pass
 
-        stored_data = list(metrics._ranges._metrics.values())[0]
+        [stored_data] = list(metrics._ranges._metrics_summaries.values())
         assert isinstance(stored_data, dict)
         assert stored_data["min"] == 1
         assert stored_data["max"] == 3
         assert stored_data["count"] == 2
         assert stored_data["mean"] == 2
-        assert isinstance(stored_data["first"], striemann.metrics.Metric)
+        first = stored_data["first"]
+        assert isinstance(first, striemann.metrics.Metric)
 
         with metrics.time("time"):
             pass
 
-        stored_data = list(metrics._ranges._metrics.values())[0]
+        [stored_data] = list(metrics._ranges._metrics_summaries.values())
         assert isinstance(stored_data, dict)
         assert stored_data["min"] == 1
         assert stored_data["max"] == 5
         assert stored_data["count"] == 3
         assert stored_data["mean"] == 3
-        assert isinstance(stored_data["first"], striemann.metrics.Metric)
+        assert stored_data["first"] is first
 
     @mock.patch("timeit.default_timer", side_effect=[0, 1, 0, 3])
     def test_timers(self, timer):
