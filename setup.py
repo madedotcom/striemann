@@ -2,6 +2,7 @@
 
 import ast
 import os
+import versioneer
 
 from setuptools import setup, find_packages
 
@@ -47,10 +48,6 @@ tests_require = [
 
 ]
 
-
-version = read_version(os.path.join(this_dir(), 'src/striemann/_version.py'))
-
-
 setup(
     name='striemann',
     url='https://github.com/madedotcom/striemann',
@@ -64,6 +61,7 @@ setup(
     packages=find_packages('src'),
     platforms=['any'],
     tests_require=tests_require,
-    version=version,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     zip_safe=True,
 )

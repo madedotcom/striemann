@@ -1,0 +1,2 @@
+src/_version.py export-subst
+src/striemann/_version.py export-subst
