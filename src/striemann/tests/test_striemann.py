@@ -73,9 +73,10 @@ class Test:
         assert stored_data["min"] == 1
         assert stored_data["max"] == 3
         assert stored_data["count"] == 2
-        assert (
-            stored_data["total"] == 4,
-        ), 'We call metrics.time("time") twice, once for 1 sec and once for 3 sec so 4 sec in total (see side_effect)'
+        assert stored_data["total"] == 4, (
+            'We call metrics.time("time") twice, once for 1 sec '
+            "and once for 3 sec so 4 sec in total (see side_effect)"
+        )
         first = stored_data["first"]
         assert isinstance(first, striemann.metrics.Metric)
 

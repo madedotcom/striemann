@@ -9,13 +9,16 @@ after_success:
 jobs:
   include:
   - stage: test
-    python: 3.6
-    env: TOXENV=formatting,py36
+    python: 3.8
+    env: TOXENV=formatting,py38
   - stage: test
-    python: 3.5
-    env: TOXENV=py35
-  - stage: deploy
+    python: 3.7
+    env: TOXENV=py37
+  - stage: test
     python: 3.6
+    env: TOXENV=py36
+  - stage: deploy
+    python: 3.8
     script: skip
     deploy:
       provider: pypi

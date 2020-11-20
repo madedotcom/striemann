@@ -10,16 +10,14 @@ from striemann._deprecation import deprecated
 
 
 def metric_id(service_name, tags=None, fields=None):
-    """ Helper function for creating instances of :class:`~striemann.metrics.MetricId`
-    """
+    """Helper function for creating instances of :class:`~striemann.metrics.MetricId`"""
     return MetricId(
         service_name, frozenset(tags or []), frozenset(fields.items() or {})
     )
 
 
 class FakeTimer:
-    """ Fake implementation of the context manager :meth:`~striemann.metrics.Metrics.time`
-    """
+    """ Fake implementation of the context manager :meth:`~striemann.metrics.Metrics.time`"""
 
     def __init__(self, service_name, tags, attributes, metrics):
         self.metric_id = metric_id(service_name, tags, attributes)
@@ -33,7 +31,7 @@ class FakeTimer:
 
 
 class FakeMetrics(list):
-    """ Fake implementation of :class:`~striemann.metrics.Metrics`
+    """Fake implementation of :class:`~striemann.metrics.Metrics`
 
     Examples:
 

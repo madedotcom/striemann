@@ -38,7 +38,7 @@ MetricId.attributes.__doc__ = (
 
 
 class Metric:
-    """ A single measurement.
+    """A single measurement.
 
     Args:
         service (str): The name of the metric.
@@ -85,16 +85,14 @@ class Recorder:
 
 
 class Transport:
-    """ Sends metrics for storage or processing
-    """
+    """Sends metrics for storage or processing"""
 
     def send_event(self, event):
-        """ Buffer a single event for sending.
-        """
+        """Buffer a single event for sending."""
         pass
 
     def flush(self, is_closing):
-        """ Send all buffered metrics
+        """Send all buffered metrics
 
         Args:
             is_closing (bool): True if the transport should tear down any resources,
@@ -172,7 +170,7 @@ class StdoutTransport(Transport):
         for event in self.batch:
             now = datetime.now()
             event["metric"]["time"] = now.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-            print(json.dumps(event))
+            print(json.dumps(event), flush=True)
 
         self.batch = []
 
@@ -432,7 +430,7 @@ class Metrics:
         self._counters = Counter(source)
 
     def recordGauge(self, service_name, value, ttl=None, tags=None, **kwargs):
-        """ Record a single scalar value, eg. Queue Depth, Current Uptime, Disk Free
+        """Record a single scalar value, eg. Queue Depth, Current Uptime, Disk Free
 
         Args:
             service_name (str): The name of the recorded metric.
@@ -471,7 +469,7 @@ class Metrics:
         self._gauges.record(service_name, value, ttl, tags, kwargs)
 
     def incrementCounter(self, service_name, value=1, ttl=None, tags=None, **kwargs):
-        """ Record an increase in a value, eg. Cache Hits, Files Written
+        """Record an increase in a value, eg. Cache Hits, Files Written
 
         Args:
             service_name (str): The name of the recorded metric.
@@ -523,7 +521,7 @@ class Metrics:
         self._counters.record(service_name, value, ttl, tags, kwargs)
 
     def decrementCounter(self, service_name, value=1, ttl=None, tags=None, **kwargs):
-        """ Record an decrease in a value, eg. Cache Hits, Files Written
+        """Record an decrease in a value, eg. Cache Hits, Files Written
 
         Args:
             service_name (str): The name of the recorded metric.
@@ -549,7 +547,7 @@ class Metrics:
         self._counters.record(service_name, 0 - value, ttl, tags, kwargs)
 
     def time(self, service_name, ttl=None, tags=None, **kwargs):
-        """ Record the time taken for an operation.
+        """Record the time taken for an operation.
 
         The time method returns a context manager that can be used for timing
         an operation. The timer uses the `default timer<https://docs.python.org/2/library/timeit.html#timeit.default_timer>_` for the operating system.
@@ -638,7 +636,7 @@ class Metrics:
         return Timer(service_name, ttl, tags, kwargs, self._ranges)
 
     def recordRange(self, service_name, value, ttl=None, tags=[], **kwargs):
-        """ Record statistics about a range of values
+        """Record statistics about a range of values
 
         Ranges are useful when we care about a metric in aggregate rather than
         recording each individual event. When flushed, a Range sends the minimum,
@@ -743,7 +741,7 @@ class Metrics:
         self._ranges.record(service_name, value, ttl, tags, kwargs)
 
     def flush(self, is_closing=False):
-        """ Flush all metrics to the underlying transport.
+        """Flush all metrics to the underlying transport.
 
         Args:
             is_closing (bool): True if the transport should be shut down.
